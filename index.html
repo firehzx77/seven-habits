@@ -1,0 +1,820 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>高效能人士七个习惯 · 课后智能体（ AI作业评估教练）</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/html-docx-js/dist/html-docx.js"></script>
+<style>
+  :root{
+    --bg:#f5f7fa; --ink:#0f172a; --muted:#667185; --panel:#ffffff; --line:#e9edf3;
+    --grad1:#6a11cb; --grad2:#2575fc; --accent:#2563eb; --accent-hover:#1e4ed8;
+    --ok:#22c55e; --warn:#f59e0b; --danger:#e11d48;
+    --green:#22c55e; --blue:#3b82f6; --yellow:#f59e0b; --orange:#fb923c;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:system-ui,Segoe UI,Roboto,Arial,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.6}
+  .container{max-width:1200px;margin:0 auto;padding:18px}
+  header{background:linear-gradient(135deg,var(--grad1),var(--grad2));color:#fff;border-radius:14px;
+    padding:22px 18px;margin-bottom:16px;box-shadow:0 4px 15px rgba(0,0,0,.08)}
+  header h1{margin:0 0 6px;font-size:24px}
+  header p{margin:0;color:#eaf0ff}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .btn{cursor:pointer;border:none;background:var(--accent);color:#fff;border-radius:10px;padding:10px 16px;font-weight:600;display:inline-flex;align-items:center;gap:8px}
+  .btn:hover{background:var(--accent-hover)}
+  .btn-ghost{background:#eef2ff;color:#1e40af;border:1px solid #c7d2fe}
+  .btn-ghost:hover{background:#e0e7ff}
+  .btn-red{background:var(--danger)}
+  .btn-sm{padding:8px 10px;border-radius:8px;font-size:13px}
+  .muted{color:var(--muted)}
+  .pill{display:inline-block;background:#e3f2fd;color:#1565c0;border:1px solid #c7d2fe;padding:4px 8px;border-radius:999px;font-size:12px}
+  /* Tabs */
+  .tabs{display:grid;grid-template-columns:repeat(8,1fr);background:#fff;border-radius:12px;overflow:hidden;margin:14px 0;box-shadow:0 4px 12px rgba(0,0,0,.06)}
+  .tab{white-space:pre-line;text-align:center;padding:12px 6px;font-weight:700;color:#334155;border-bottom:3px solid transparent;cursor:pointer;transition:.2s;font-size:14px}
+  .tab:hover{background:#f0f5ff}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent);background:#f0f5ff}
+  .pane{display:none;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;box-shadow:0 4px 12px rgba(0,0,0,.06)}
+  .pane.active{display:block;animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  /* Layout & components */
+  .two{display:grid;gap:18px;grid-template-columns:1.05fr .95fr}
+  @media(max-width:980px){.two{grid-template-columns:1fr}}
+  .section-title{font-size:18px;margin:0 0 10px;display:flex;align-items:center;gap:10px;color:#1f2937}
+  .section-title i{color:#1d4ed8}
+  .input{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+  textarea,input[type=text]{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;background:#fff;resize:vertical}
+  textarea{min-height:110px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .grid2x2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .colorbox{border:3px solid;border-radius:12px;padding:10px;min-height:140px}
+  .green{border-color:var(--green)}
+  .blue{border-color:var(--blue)}
+  .yellow{border-color:var(--yellow)}
+  .orange{border-color:var(--orange)}
+  .badge{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#334155;color:#fff;font-weight:800;font-size:12px}
+  .row-ops{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-bottom:6px}
+  footer{color:#7f8c8d;text-align:center;margin:16px 0}
+  .export-only{display:none}
+  @media print{header,.tabs,.toolbar .btn,.toolbar .btn-ghost{display:none!important}
+               .container{max-width:unset}}
+  /* Coach UI */
+  .coach{display:grid;grid-template-columns:1fr;gap:8px}
+  .scorebar{height:10px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:999px;overflow:hidden}
+  .scorebar .fill{height:100%;width:0;background:linear-gradient(90deg,#60a5fa,#2563eb)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .klist{border:1px solid var(--line);background:#f8fafc;border-radius:10px;padding:8px;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>高效能人士七个习惯 · 课后练习册</h1>
+    <p>分页练习 ·  每页/整册导出 Word · <b>AI作业评估教练</b></p>
+    <div class="toolbar" style="margin-top:10px">
+      <button class="btn-ghost btn-sm" onclick="saveLocal()"><i class="fa-regular fa-floppy-disk"></i> 保存到浏览器</button>
+      <button class="btn-ghost btn-sm" onclick="loadLocal()"><i class="fa-solid fa-folder-open"></i> 读取保存</button>
+      <button class="btn-ghost btn-sm" onclick="clearLocal()"><i class="fa-regular fa-trash-can"></i> 清空</button>
+      <span class="pill">整册导出：</span>
+      <button class="btn btn-sm" onclick="exportFullWord()"><i class="fa-solid fa-file-word"></i> Word</button>
+      <span class="muted" style="margin-left:auto;font-size:12px">教练提示词依据科维方法论设计；DeepSeek Key 通过 Vercel 环境变量注入（不在前端暴露）。</span>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-tab="intro">课后导读</div>
+    <div class="tab" data-tab="h1">习惯一<br>主动积极</div>
+    <div class="tab" data-tab="h2">习惯二<br>以终为始</div>
+    <div class="tab" data-tab="h3">习惯三<br>要事第一</div>
+    <div class="tab" data-tab="h4">习惯四<br>双赢思维</div>
+    <div class="tab" data-tab="h5">习惯五<br>知彼解己</div>
+    <div class="tab" data-tab="h6">习惯六<br>统合综效</div>
+    <div class="tab" data-tab="h7">习惯七<br>不断更新</div>
+  </div>
+
+  <!-- 1 导读 -->
+  <section id="intro" class="pane active">
+    <div class="toolbar" style="justify-content:space-between">
+      <h2 class="section-title" style="margin:0"><i class="fa-solid fa-book-open-reader"></i> 课后导读</h2>
+      <div class="chips" style="display:flex;gap:8px">
+        <label class="pill" style="cursor:pointer"><input type="radio" name="readmode" checked onchange="switchIntro('std')"> 标准模式</label>
+        <label class="pill" style="cursor:pointer"><input type="radio" name="readmode" onchange="switchIntro('deep')"> 深度阅读</label>
+      </div>
+    </div>
+    <div id="intro_std" class="card">
+      <p class="muted" style="margin:6px 0">——节选与改写自你提供的“课后导读”与作业结构，用于页面说明与练习引导。</p>
+      <ul>
+        <li><b>高效能的本质：</b>效能建立在与自然规律一致的恒久原则之上。</li>
+        <li><b>三大阶段：</b>个人效能（1–3）→ 公众效能（4–6）→ 不断更新（7）。</li>
+      </ul>
+    </div>
+    <div id="intro_deep" class="card" style="display:none">
+      <p>深读建议：将每个习惯与其“低效对照”并列，写出你的惯性模式与一条最小行动的证据化检查点。</p>
+    </div>
+  </section>
+
+  <!-- 2 主动积极 -->
+  <section id="h1" class="pane">
+    <div class="toolbar" style="justify-content:space-between">
+      <h2 class="section-title" style="margin:0"><i class="fa-solid fa-person-running"></i> 习惯一｜主动积极</h2>
+      <div class="toolbar">
+        <button class="btn-ghost btn-sm" onclick="exportPageWord('h1','习惯一 主动积极')"><i class="fa-solid fa-file-word"></i> 本页 Word</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title" style="font-size:16px"><i class="fa-solid fa-square-check"></i> 练习 A｜事件练习（消极→积极语言）</div>
+      <div id="h1a_rows"></div>
+      <div class="toolbar">
+        <button class="btn btn-sm" onclick="addH1ARow(true)"><i class="fa-solid fa-plus"></i> 新增一行（事件练习）</button>
+      </div>
+      <div class="muted" style="font-size:12px">首行示例：事件/原反应/积极语言。</div>
+    </div>
+
+    <div class="card">
+      <div class="section-title" style="font-size:16px"><i class="fa-solid fa-square-check"></i> 练习 B｜主动积极的表达</div>
+      <div class="input"><label>你面对的场景是</label>
+        <textarea id="h1b_scene" placeholder="对谁/在什么场景；希望达成的共同结果…"></textarea>
+      </div>
+      <div class="grid2x2">
+        <div class="input">
+          <label>① 欣赏与共同利益</label>
+          <textarea id="h1b_1" class="colorbox green" placeholder="具体措辞，包含感谢与共同利益的连接…"></textarea>
+        </div>
+        <div class="input">
+          <label>② 面对的现实/专注结果/投入</label>
+          <textarea id="h1b_2" class="colorbox blue" placeholder="澄清现实、结果与投入承诺…"></textarea>
+        </div>
+        <div class="input">
+          <label>③ 包融与协同（及协议处理）</label>
+          <textarea id="h1b_3" class="colorbox yellow" placeholder="相关干系人/潜在冲突/修复方式…"></textarea>
+        </div>
+        <div class="input">
+          <label>④ 现在的行动/请求（是否足够）</label>
+          <textarea id="h1b_4" class="colorbox orange" placeholder="明确请求、行动与检视点…"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title"><i class="fa-solid fa-user-tie"></i> AI作业评估教练</div>
+      <div class="toolbar"><button class="btn btn-sm" onclick="evaluateHabit('h1')"><i class="fa-solid fa-stethoscope"></i> 评估作业</button></div>
+      <div id="h1_coach" class="coach klist">（点击“评估作业”获得点评、改进建议与评分）</div>
+    </div>
+  </section>
+
+  <!-- 3 以终为始 -->
+  <section id="h2" class="pane">
+    <div class="toolbar" style="justify-content:space-between">
+      <h2 class="section-title" style="margin:0"><i class="fa-solid fa-flag-checkered"></i> 习惯二｜以终为始</h2>
+      <button class="btn-ghost btn-sm" onclick="exportPageWord('h2','习惯二 以终为始')"><i class="fa-solid fa-file-word"></i> 本页 Word</button>
+    </div>
+    <div class="two">
+      <div class="card">
+        <div class="input"><label>三年后的自己想对现在说的一句话</label><input id="h2_future" type="text" placeholder="例如：把时间给最重要的人和事"/></div>
+        <div class="input"><label>个人使命宣言（草稿）</label><textarea id="h2_mission" placeholder="价值观/角色/愿景/原则…"></textarea></div>
+      </div>
+      <div class="card">
+        <div class="section-title" style="font-size:16px"><i class="fa-solid fa-diagram-project"></i> 角色—目标—行动</div>
+        <div class="grid3">
+          <div class="input"><label>角色</label><input id="h2_r1" type="text"/></div>
+          <div class="input"><label>关键目标</label><input id="h2_g1" type="text"/></div>
+          <div class="input"><label>每周/每日行动</label><input id="h2_a1" type="text"/></div>
+
+          <div class="input"><input id="h2_r2" type="text"/></div>
+          <div class="input"><input id="h2_g2" type="text"/></div>
+          <div class="input"><input id="h2_a2" type="text"/></div>
+
+          <div class="input"><input id="h2_r3" type="text"/></div>
+          <div class="input"><input id="h2_g3" type="text"/></div>
+          <div class="input"><input id="h2_a3" type="text"/></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title"><i class="fa-solid fa-user-tie"></i> AI作业评估教练</div>
+      <div class="toolbar"><button class="btn btn-sm" onclick="evaluateHabit('h2')"><i class="fa-solid fa-stethoscope"></i> 评估作业</button></div>
+      <div id="h2_coach" class="coach klist"></div>
+    </div>
+  </section>
+
+  <!-- 4 要事第一 -->
+  <section id="h3" class="pane">
+    <div class="toolbar" style="justify-content:space-between">
+      <h2 class="section-title" style="margin:0"><i class="fa-solid fa-list-check"></i> 习惯三｜要事第一</h2>
+      <button class="btn-ghost btn-sm" onclick="exportPageWord('h3','习惯三 要事第一')"><i class="fa-solid fa-file-word"></i> 本页 Word</button>
+    </div>
+    <div class="card">
+      <div class="grid3">
+        <div class="input"><label><span class="badge">①</span> 长期目标</label><textarea id="h3_long"></textarea></div>
+        <div class="input"><label><span class="badge">②</span> 中短期里程碑</label><textarea id="h3_milestone"></textarea></div>
+        <div class="input"><label><span class="badge">③</span> 本周“第一要事”</label><textarea id="h3_top"></textarea></div>
+      </div>
+      <div class="input" style="margin-top:6px"><label><span class="badge">④</span> 可能的障碍与备选路径</label><textarea id="h3_risk"></textarea></div>
+    </div>
+    <div class="card">
+      <div class="section-title"><i class="fa-solid fa-user-tie"></i> AI作业评估教练</div>
+      <div class="toolbar"><button class="btn btn-sm" onclick="evaluateHabit('h3')"><i class="fa-solid fa-stethoscope"></i> 评估作业</button></div>
+      <div id="h3_coach" class="coach klist"></div>
+    </div>
+  </section>
+
+  <!-- 5 双赢思维 -->
+  <section id="h4" class="pane">
+    <div class="toolbar" style="justify-content:space-between">
+      <h2 class="section-title" style="margin:0"><i class="fa-solid fa-scale-balanced"></i> 习惯四｜双赢思维</h2>
+      <button class="btn-ghost btn-sm" onclick="exportPageWord('h4','习惯四 双赢思维')"><i class="fa-solid fa-file-word"></i> 本页 Word</button>
+    </div>
+    <div class="card">
+      <div class="input"><label>双赢场景描述（发生了什么）</label><textarea id="h4_scene"></textarea></div>
+      <div class="grid3">
+        <div class="input"><label>双方共同期望/结果</label><textarea id="h4_expect"></textarea></div>
+        <div class="input"><label>我采取了哪些行动</label><textarea id="h4_actions"></textarea></div>
+        <div class="input">
+          <label>人际自查（勾选）</label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <label class="pill"><input type="checkbox" id="h4_c1"/> 言行一致</label>
+            <label class="pill"><input type="checkbox" id="h4_c2"/> 表达且体谅他人</label>
+            <label class="pill"><input type="checkbox" id="h4_c3"/> 富足心态</label>
+            <label class="pill"><input type="checkbox" id="h4_c4"/> 尊重善待</label>
+            <label class="pill"><input type="checkbox" id="h4_c5"/> 设身处地倾听</label>
+            <label class="pill"><input type="checkbox" id="h4_c6"/> 建设性反馈</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title"><i class="fa-solid fa-user-tie"></i> AI作业评估教练</div>
+      <div class="toolbar"><button class="btn btn-sm" onclick="evaluateHabit('h4')"><i class="fa-solid fa-stethoscope"></i> 评估作业</button></div>
+      <div id="h4_coach" class="coach klist"></div>
+    </div>
+  </section>
+
+  <!-- 6 知彼解己 -->
+  <section id="h5" class="pane">
+    <div class="toolbar" style="justify-content:space-between">
+      <h2 class="section-title" style="margin:0"><i class="fa-solid fa-ear-listen"></i> 习惯五｜知彼解己</h2>
+      <button class="btn-ghost btn-sm" onclick="exportPageWord('h5','习惯五 知彼解己')"><i class="fa-solid fa-file-word"></i> 本页 Word</button>
+    </div>
+    <div class="two">
+      <div class="card">
+        <div class="section-title" style="font-size:16px"><i class="fa-regular fa-comment-dots"></i> 积极性反馈</div>
+        <div class="input"><label>反馈事项</label><input id="h5_pos_item" type="text"/></div>
+        <div class="input"><label>行为与事实</label><textarea id="h5_pos_behavior"></textarea></div>
+        <div class="input"><label>影响及评价</label><textarea id="h5_pos_impact"></textarea></div>
+        <div class="input"><label>欣赏与感谢</label><textarea id="h5_pos_thanks"></textarea></div>
+        <div class="grid3">
+          <div class="input"><label>对方反应</label><textarea id="h5_pos_react"></textarea></div>
+          <div class="input"><label>自我评价</label><textarea id="h5_pos_self"></textarea></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title" style="font-size:16px"><i class="fa-regular fa-message"></i> 建设性反馈</div>
+        <div class="input"><label>反馈事项</label><input id="h5_con_item" type="text"/></div>
+        <div class="input"><label>行为与事实</label><textarea id="h5_con_behavior"></textarea></div>
+        <div class="input"><label>影响及后果</label><textarea id="h5_con_conseq"></textarea></div>
+        <div class="input"><label>期待的行为与结果</label><textarea id="h5_con_expect"></textarea></div>
+        <div class="grid3">
+          <div class="input"><label>对方反应</label><textarea id="h5_con_react"></textarea></div>
+          <div class="input"><label>自我评价</label><textarea id="h5_con_self"></textarea></div>
+        </div>
+      </div>
+    </div>
+    <div class="two">
+      <div class="card">
+        <div class="section-title" style="font-size:16px"><i class="fa-solid fa-hand-holding-heart"></i> 深度倾听</div>
+        <div class="grid3">
+          <div class="input"><label>对话背景</label><textarea id="h5_listen_bg"></textarea></div>
+          <div class="input"><label>对话要点</label><textarea id="h5_listen_pts"></textarea></div>
+        </div>
+        <div class="grid3">
+          <div class="input"><label>接纳</label><textarea id="h5_listen_accept"></textarea></div>
+          <div class="input"><label>回应</label><textarea id="h5_listen_resp"></textarea></div>
+          <div class="input"><label>求证</label><textarea id="h5_listen_verify"></textarea></div>
+        </div>
+        <div class="input"><label>对方反应/自评</label><textarea id="h5_listen_rx"></textarea></div>
+      </div>
+      <div class="card">
+        <div class="section-title" style="font-size:16px"><i class="fa-solid fa-circle-question"></i> 有力提问</div>
+        <div class="grid3">
+          <div class="input"><label>对话背景</label><textarea id="h5_q_bg"></textarea></div>
+          <div class="input"><label>对话要点</label><textarea id="h5_q_pts"></textarea></div>
+        </div>
+        <div class="grid3">
+          <div class="input"><label>未来导向型问题</label><textarea id="h5_q_future"></textarea></div>
+          <div class="input"><label>开放式问题</label><textarea id="h5_q_open"></textarea></div>
+          <div class="input"><label>积极型问题</label><textarea id="h5_q_positive"></textarea></div>
+        </div>
+        <div class="input"><label>对方反应/自评</label><textarea id="h5_q_rx"></textarea></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title"><i class="fa-solid fa-user-tie"></i> AI作业评估教练</div>
+      <div class="toolbar"><button class="btn btn-sm" onclick="evaluateHabit('h5')"><i class="fa-solid fa-stethoscope"></i> 评估作业</button></div>
+      <div id="h5_coach" class="coach klist"></div>
+    </div>
+  </section>
+
+  <!-- 7 统合综效 -->
+  <section id="h6" class="pane">
+    <div class="toolbar" style="justify-content:space-between">
+      <h2 class="section-title" style="margin:0"><i class="fa-solid fa-handshake-angle"></i> 习惯六｜统合综效</h2>
+      <button class="btn-ghost btn-sm" onclick="exportPageWord('h6','习惯六 统合综效')"><i class="fa-solid fa-file-word"></i> 本页 Word</button>
+    </div>
+    <div class="card">
+      <div class="input"><label>差异地图：我与对方的关键差异与价值</label><textarea id="h6_diff" placeholder="列出 3–5 条差异，并写出“这是一种资源，因为…”"></textarea></div>
+    </div>
+    <div class="card">
+      <div class="section-title" style="font-size:16px"><i class="fa-solid fa-people-arrows"></i> 第三选择画布</div>
+      <div class="grid3" style="grid-template-columns:repeat(5,1fr)">
+        <div class="input"><label>我的立场</label><textarea id="h6_my"></textarea></div>
+        <div class="input"><label>对方立场</label><textarea id="h6_their"></textarea></div>
+        <div class="input"><label>共同目标</label><textarea id="h6_goal"></textarea></div>
+        <div class="input"><label>第三选择（组合/变通/创意）</label><textarea id="h6_alt"></textarea></div>
+        <div class="input"><label>下一步行动</label><textarea id="h6_next"></textarea></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title"><i class="fa-solid fa-user-tie"></i> AI作业评估教练</div>
+      <div class="toolbar"><button class="btn btn-sm" onclick="evaluateHabit('h6')"><i class="fa-solid fa-stethoscope"></i> 评估作业</button></div>
+      <div id="h6_coach" class="coach klist"></div>
+    </div>
+  </section>
+
+  <!-- 8 不断更新 -->
+  <section id="h7" class="pane">
+    <div class="toolbar" style="justify-content:space-between">
+      <h2 class="section-title" style="margin:0"><i class="fa-solid fa-arrows-rotate"></i> 习惯七｜不断更新</h2>
+      <button class="btn-ghost btn-sm" onclick="exportPageWord('h7','习惯七 不断更新')"><i class="fa-solid fa-file-word"></i> 本页 Word</button>
+    </div>
+
+    <div class="card">
+      <h3 class="section-title" style="font-size:16px"><i class="fa-regular fa-rectangle-list"></i> 四维“更新清单”</h3>
+      <div class="grid3" style="grid-template-columns:repeat(4,1fr)">
+        <div class="input"><label>身体 Body</label><textarea id="h7_body_backlog"></textarea></div>
+        <div class="input"><label>社会/情感 Heart</label><textarea id="h7_heart_backlog"></textarea></div>
+        <div class="input"><label>智力 Mind</label><textarea id="h7_mind_backlog"></textarea></div>
+        <div class="input"><label>精神 Spirit</label><textarea id="h7_spirit_backlog"></textarea></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="section-title" style="font-size:16px"><i class="fa-solid fa-calendar-week"></i> 四周计划（按维度拆分）</h3>
+      <div class="grid3" style="grid-template-columns:repeat(4,1fr)">
+        <div class="input"><label>第 1 周</label><textarea id="h7_w1_body" placeholder="身体"></textarea>
+          <textarea id="h7_w1_heart" placeholder="社会/情感"></textarea>
+          <textarea id="h7_w1_mind" placeholder="智力"></textarea>
+          <textarea id="h7_w1_spirit" placeholder="精神"></textarea></div>
+        <div class="input"><label>第 2 周</label><textarea id="h7_w2_body" placeholder="身体"></textarea>
+          <textarea id="h7_w2_heart" placeholder="社会/情感"></textarea>
+          <textarea id="h7_w2_mind" placeholder="智力"></textarea>
+          <textarea id="h7_w2_spirit" placeholder="精神"></textarea></div>
+        <div class="input"><label>第 3 周</label><textarea id="h7_w3_body" placeholder="身体"></textarea>
+          <textarea id="h7_w3_heart" placeholder="社会/情感"></textarea>
+          <textarea id="h7_w3_mind" placeholder="智力"></textarea>
+          <textarea id="h7_w3_spirit" placeholder="精神"></textarea></div>
+        <div class="input"><label>第 4 周</label><textarea id="h7_w4_body" placeholder="身体"></textarea>
+          <textarea id="h7_w4_heart" placeholder="社会/情感"></textarea>
+          <textarea id="h7_w4_mind" placeholder="智力"></textarea>
+          <textarea id="h7_w4_spirit" placeholder="精神"></textarea></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="input"><label>自我承诺（如何检视与复盘）</label>
+        <textarea id="h7_commit" placeholder="每周固定时间回顾；衡量指标；必要的支持/提醒机制等"></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title"><i class="fa-solid fa-user-tie"></i> AI作业评估教练</div>
+      <div class="toolbar"><button class="btn btn-sm" onclick="evaluateHabit('h7')"><i class="fa-solid fa-stethoscope"></i> 评估作业</button></div>
+      <div id="h7_coach" class="coach klist"></div>
+    </div>
+  </section>
+
+  <footer>© 七个习惯 · 课后练习册</footer>
+</div>
+
+<!-- 导出容器（用于整册Word生成） -->
+<div id="exportArea" class="export-only"></div>
+
+<script>
+/* ================== DeepSeek 接口与 JSON 解析（容错） ================== */
+const DS_ENDPOINT = "/api/deepseek";
+const MODEL   = "deepseek-chat";
+
+async function callDS(messages, max_tokens=1600, temperature=0.35){
+  const r = await fetch(DS_ENDPOINT,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ model: MODEL, temperature, max_tokens, messages })
+  });
+  if(!r.ok){ const t=await r.text(); throw new Error(`HTTP ${r.status}: ${t.slice(0,200)}`); }
+  const data = await r.json(); return (data.choices?.[0]?.message?.content || '').trim();
+}
+function parseJSONLoose(raw){
+  if(!raw) throw new Error('空输出');
+  let s = String(raw).trim();
+  const tryParse=(t)=>JSON.parse(t.trim());
+  try{ if(s[0]==='{'||s[0]==='[') return tryParse(s); }catch(_){}
+  let m = s.match(/```json\s*([\s\S]*?)```/i) || s.match(/```\s*([\s\S]*?)```/);
+  if(m){ s=m[1]; try{ return tryParse(s); }catch(_){} }
+  const objStart=s.indexOf('{'), objEnd=s.lastIndexOf('}'); if(objStart>-1&&objEnd>objStart){ try{ return tryParse(s.slice(objStart,objEnd+1)); }catch(_){} }
+  const arrStart=s.indexOf('['), arrEnd=s.lastIndexOf(']'); if(arrStart>-1&&arrEnd>arrStart){ try{ return tryParse(s.slice(arrStart,arrEnd+1)); }catch(_){} }
+  // 清洗：中文引号、尾逗号
+  s=s.replace(/[“”]/g,'"').replace(/[‘’]/g,'"').replace(/,\s*([}\]])/g,'$1');
+  try{ return tryParse(s); }catch(e){ throw new Error('JSON 解析失败：'+(s.slice(0,120)||'')); }
+}
+async function askJSON({system,user,schema,temp=0.3,max_tokens=1400}){
+  const raw = await callDS([{role:'system',content:system},{role:'user',content:user}], max_tokens, temp);
+  try{ return parseJSONLoose(raw); }
+  catch(_){
+    const reprompt = `仅输出合法 JSON，严格参照示例结构：${schema}（不要任何解释或 Markdown）`;
+    const raw2 = await callDS([{role:'system',content:'你是严格的JSON生成器，只返回合法JSON。'},{role:'user',content:user+"\n\n"+reprompt}], Math.min(1200,max_tokens), 0.2);
+    return parseJSONLoose(raw2);
+  }
+}
+
+/* ================== 标签页切换 ================== */
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active'); document.getElementById(tab.dataset.tab).classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+});
+
+/* ================== 导读切换 ================== */
+function switchIntro(mode){
+  document.getElementById('intro_std').style.display = (mode==='std')?'block':'none';
+  document.getElementById('intro_deep').style.display= (mode==='deep')?'block':'none';
+}
+
+/* ================== 习惯一·练习A 行管理 ================== */
+let H1A_COUNT=0;
+function addH1ARow(withSample=false){
+  H1A_COUNT++;
+  const id = H1A_COUNT;
+  const row = document.createElement('div');
+  row.className='card h1a-row';
+  row.dataset.rid=id;
+
+  const ops = document.createElement('div');
+  ops.className='row-ops';
+  ops.innerHTML = `<button class="btn-red btn-sm" onclick="removeH1ARow(${id})"><i class="fa-regular fa-trash-can"></i> 删除此行</button>`;
+  row.appendChild(ops);
+
+  const grid = document.createElement('div');
+  grid.className='grid3';
+  grid.innerHTML = `
+    <div class="input"><label>${H1A_COUNT===1?'事件':''}</label>
+      <textarea id="h1a_${id}_e" placeholder="${withSample && H1A_COUNT===1?'例如：临时加班':''}"></textarea></div>
+    <div class="input"><label>${H1A_COUNT===1?'原反应（消极）':''}</label>
+      <textarea id="h1a_${id}_o" placeholder="${withSample && H1A_COUNT===1?'我不得不…':''}"></textarea></div>
+    <div class="input"><label>${H1A_COUNT===1?'积极语言重写':''}</label>
+      <textarea id="h1a_${id}_n" placeholder="${withSample && H1A_COUNT===1?'我选择…因为…；我承诺…':''}"></textarea></div>`;
+  row.appendChild(grid);
+
+  document.getElementById('h1a_rows').appendChild(row);
+}
+function removeH1ARow(id){
+  const list = document.querySelectorAll('#h1a_rows .h1a-row');
+  if(list.length<=1){ alert('至少保留一行事件练习'); return; }
+  const el = document.querySelector(`.h1a-row[data-rid="${id}"]`);
+  if(el) el.remove();
+}
+addH1ARow(true);
+
+/* ================== 保存 / 读取 / 清空 ================== */
+const LS_KEY = 'seven_habits_workbook_v4';
+const COACH_IDS = ['h1_coach','h2_coach','h3_coach','h4_coach','h5_coach','h6_coach','h7_coach'];
+function saveLocal(){
+  const kv={};
+  document.querySelectorAll('input,textarea').forEach(el=>{
+    kv[el.id]= (el.type==='checkbox') ? el.checked : el.value;
+  });
+  kv['_h1a_count'] = document.querySelectorAll('#h1a_rows .h1a-row').length;
+  COACH_IDS.forEach(id=> kv[id] = document.getElementById(id)?.innerText || '');
+  localStorage.setItem(LS_KEY, JSON.stringify(kv));
+  alert('已保存到本机浏览器');
+}
+function loadLocal(){
+  const raw=localStorage.getItem(LS_KEY); if(!raw){alert('暂无保存');return;}
+  const kv=JSON.parse(raw);
+  const need = kv['_h1a_count']||1; document.getElementById('h1a_rows').innerHTML=''; H1A_COUNT=0;
+  for(let i=1;i<=need;i++) addH1ARow(false);
+  Object.keys(kv).forEach(id=>{
+    if(id==='_h1a_count') return;
+    const el=document.getElementById(id);
+    if(!el){ // coach 输出
+      if(COACH_IDS.includes(id)){ const box=document.getElementById(id); if(box) box.innerText=kv[id]||''; }
+      return;
+    }
+    if(el.type==='checkbox') el.checked=kv[id]; else el.value=kv[id];
+  });
+  alert('已读取');
+}
+function clearLocal(){ if(confirm('清空所有输入？')){ localStorage.removeItem(LS_KEY); location.reload(); }}
+
+/* ================== 导出 Word：单页 / 整册 ================== */
+function nl2br(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br/>');}
+function sectionHTML(title, inner){ return `<h2>${title}</h2>${inner}`; }
+function fieldHTML(label, id){
+  const el=document.getElementById(id);
+  const v = (el && ('value' in el) ? el.value : (el?.innerText || ''));
+  return v? `<h3>${label}</h3><p>${nl2br(v)}</p>`:'';
+}
+function tableRows(list){ return list.map(arr=>`<tr>${arr.map(td=>`<td>${nl2br(td)}</td>`).join('')}</tr>`).join(''); }
+function byid(id){return document.getElementById(id);}
+
+function buildIntroHTML(){
+  const std = byid('intro_std').innerText.trim();
+  const deep= byid('intro_deep').innerText.trim();
+  return sectionHTML('课后导读', `<p>${nl2br(std)}</p><hr/><h3>深度阅读</h3><p>${nl2br(deep)}</p>`);
+}
+function buildH1HTML(){
+  const rows=[['事件','原反应（消极）','积极语言重写']];
+  document.querySelectorAll('#h1a_rows .h1a-row').forEach(el=>{
+    const rid=el.dataset.rid;
+    rows.push([byid(`h1a_${rid}_e`)?.value||'', byid(`h1a_${rid}_o`)?.value||'', byid(`h1a_${rid}_n`)?.value||'']);
+  });
+  const aHTML = `<h3>练习A 事件练习（消极→积极）</h3><table border="1" cellspacing="0" cellpadding="6">${tableRows(rows)}</table>`;
+  const bHTML = `<h3>练习B 主动积极的表达</h3>`+
+    fieldHTML('你面对的场景', 'h1b_scene')+
+    `<table border="1" cellspacing="0" cellpadding="6">${tableRows([
+      ['① 欣赏与共同利益','② 面对的现实/专注结果/投入'],
+      [byid('h1b_1').value, byid('h1b_2').value],
+      ['③ 包融与协同（及协议处理）','④ 现在的行动/请求（是否足够）'],
+      [byid('h1b_3').value, byid('h1b_4').value]
+    ])}</table>`;
+  return sectionHTML('习惯一｜主动积极', aHTML + bHTML + fieldHTML('AI教练点评','h1_coach'));
+}
+function buildH2HTML(){
+  const rRows=[['角色','关键目标','每周/每日行动'],
+    [byid('h2_r1').value,byid('h2_g1').value,byid('h2_a1').value],
+    [byid('h2_r2').value,byid('h2_g2').value,byid('h2_a2').value],
+    [byid('h2_r3').value,byid('h2_g3').value,byid('h2_a3').value]];
+  return sectionHTML('习惯二｜以终为始',
+    fieldHTML('三年后的自己', 'h2_future')+
+    fieldHTML('个人使命宣言（草稿）', 'h2_mission')+
+    `<h3>角色—目标—行动</h3><table border="1" cellspacing="0" cellpadding="6">${tableRows(rRows)}</table>`+
+    fieldHTML('AI教练点评','h2_coach')
+  );
+}
+function buildH3HTML(){
+  return sectionHTML('习惯三｜要事第一',
+    fieldHTML('① 长期目标', 'h3_long')+
+    fieldHTML('② 中短期里程碑', 'h3_milestone')+
+    fieldHTML('③ 本周“第一要事”', 'h3_top')+
+    fieldHTML('④ 可能的障碍与备选路径', 'h3_risk')+
+    fieldHTML('AI教练点评','h3_coach')
+  );
+}
+function buildH4HTML(){
+  return sectionHTML('习惯四｜双赢思维',
+    fieldHTML('场景', 'h4_scene')+
+    fieldHTML('共同期望/结果', 'h4_expect')+
+    fieldHTML('我的行动', 'h4_actions')+
+    fieldHTML('AI教练点评','h4_coach')
+  );
+}
+function buildH5HTML(){
+  return sectionHTML('习惯五｜知彼解己',
+    `<h3>积极性反馈</h3>`+
+    fieldHTML('反馈事项','h5_pos_item')+
+    fieldHTML('行为与事实','h5_pos_behavior')+
+    fieldHTML('影响及评价','h5_pos_impact')+
+    fieldHTML('欣赏与感谢','h5_pos_thanks')+
+    fieldHTML('对方反应','h5_pos_react')+
+    fieldHTML('自我评价','h5_pos_self')+
+    `<h3>建设性反馈</h3>`+
+    fieldHTML('反馈事项','h5_con_item')+
+    fieldHTML('行为与事实','h5_con_behavior')+
+    fieldHTML('影响及后果','h5_con_conseq')+
+    fieldHTML('期待的行为与结果','h5_con_expect')+
+    fieldHTML('对方反应','h5_con_react')+
+    fieldHTML('自我评价','h5_con_self')+
+    `<h3>深度倾听</h3>`+
+    fieldHTML('背景','h5_listen_bg')+
+    fieldHTML('要点','h5_listen_pts')+
+    fieldHTML('接纳','h5_listen_accept')+
+    fieldHTML('回应','h5_listen_resp')+
+    fieldHTML('求证','h5_listen_verify')+
+    fieldHTML('对方反应/自评','h5_listen_rx')+
+    `<h3>有力提问</h3>`+
+    fieldHTML('背景','h5_q_bg')+
+    fieldHTML('要点','h5_q_pts')+
+    fieldHTML('未来导向型','h5_q_future')+
+    fieldHTML('开放式','h5_q_open')+
+    fieldHTML('积极型','h5_q_positive')+
+    fieldHTML('对方反应/自评','h5_q_rx')+
+    fieldHTML('AI教练点评','h5_coach')
+  );
+}
+function buildH6HTML(){
+  const rows=[['我的立场','对方立场','共同目标','第三选择','下一步行动'],
+              [byid('h6_my').value,byid('h6_their').value,byid('h6_goal').value,byid('h6_alt').value,byid('h6_next').value]];
+  return sectionHTML('习惯六｜统合综效', 
+    fieldHTML('差异地图', 'h6_diff')+
+    `<h3>第三选择画布</h3><table border="1" cellspacing="0" cellpadding="6">${tableRows(rows)}</table>`+
+    fieldHTML('AI教练点评','h6_coach')
+  );
+}
+function buildH7HTML(){
+  const backRows=[['身体','社会/情感','智力','精神'],
+                  [byid('h7_body_backlog').value,byid('h7_heart_backlog').value,byid('h7_mind_backlog').value,byid('h7_spirit_backlog').value]];
+  const planRows=[['周次/维度','身体','社会/情感','智力','精神'],
+                  ['第 1 周',byid('h7_w1_body').value,byid('h7_w1_heart').value,byid('h7_w1_mind').value,byid('h7_w1_spirit').value],
+                  ['第 2 周',byid('h7_w2_body').value,byid('h7_w2_heart').value,byid('h7_w2_mind').value,byid('h7_w2_spirit').value],
+                  ['第 3 周',byid('h7_w3_body').value,byid('h7_w3_heart').value,byid('h7_w3_mind').value,byid('h7_w3_spirit').value],
+                  ['第 4 周',byid('h7_w4_body').value,byid('h7_w4_heart').value,byid('h7_w4_mind').value,byid('h7_w4_spirit').value]];
+  return sectionHTML('习惯七｜不断更新', 
+    `<h3>四维更新清单</h3><table border="1" cellspacing="0" cellpadding="6">${tableRows(backRows)}</table>`+
+    `<h3>四周计划</h3><table border="1" cellspacing="0" cellpadding="6">${tableRows(planRows)}</table>`+
+    fieldHTML('自我承诺', 'h7_commit')+
+    fieldHTML('AI教练点评','h7_coach')
+  );
+}
+function buildPageHTML(paneId){
+  switch(paneId){
+    case 'intro': return buildIntroHTML();
+    case 'h1':    return buildH1HTML();
+    case 'h2':    return buildH2HTML();
+    case 'h3':    return buildH3HTML();
+    case 'h4':    return buildH4HTML();
+    case 'h5':    return buildH5HTML();
+    case 'h6':    return buildH6HTML();
+    case 'h7':    return buildH7HTML();
+    default: return '';
+  }
+}
+function buildFullHTML(){
+  return `<h1>高效能人士七个习惯 · 课后练习册</h1><p>导出时间：${new Date().toLocaleString()}</p>`+
+         buildIntroHTML()+buildH1HTML()+buildH2HTML()+buildH3HTML()+
+         buildH4HTML()+buildH5HTML()+buildH6HTML()+buildH7HTML();
+}
+function exportPageWord(paneId,title){
+  const html = buildPageHTML(paneId);
+  const blob = window.htmlDocx.asBlob(`<!doctype html><html><head><meta charset="utf-8"></head><body>${html}</body></html>`,
+    {margins:{top:720,right:720,bottom:720,left:720}});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download = `${title}_${Date.now()}.docx`; a.click(); URL.revokeObjectURL(a.href);
+}
+function exportFullWord(){
+  const html = buildFullHTML();
+  const blob = window.htmlDocx.asBlob(`<!doctype html><html><head><meta charset="utf-8"></head><body>${html}</body></html>`,
+    {margins:{top:720,right:720,bottom:720,left:720}});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`七个习惯_课后练习_${Date.now()}.docx`; a.click(); URL.revokeObjectURL(a.href);
+}
+
+/* ================== AI 作业评估教练（7 个习惯） ================== */
+const HABIT_META = {
+  h1: {
+    name:'习惯一｜主动积极',
+    collect: ()=> {
+      const events=[]; document.querySelectorAll('#h1a_rows .h1a-row').forEach(el=>{
+        const rid=el.dataset.rid;
+        events.push({event:byid(`h1a_${rid}_e`).value, reactive:byid(`h1a_${rid}_o`).value, proactive:byid(`h1a_${rid}_n`).value});
+      });
+      return {
+        A_events: events,
+        B_scene: byid('h1b_scene').value,
+        B: {appreciation:byid('h1b_1').value, reality:byid('h1b_2').value, inclusion:byid('h1b_3').value, request:byid('h1b_4').value}
+      };
+    },
+    criteria: `聚焦“选择与责任、影响圈vs关注圈、被动语汇→主动语汇、承诺与检视”。观察是否把不可控外因转译为可控行动。`,
+  },
+  h2: {
+    name:'习惯二｜以终为始',
+    collect: ()=> ({
+      future:byid('h2_future').value, mission:byid('h2_mission').value,
+      roles:[
+        {role:byid('h2_r1').value, goal:byid('h2_g1').value, act:byid('h2_a1').value},
+        {role:byid('h2_r2').value, goal:byid('h2_g2').value, act:byid('h2_a2').value},
+        {role:byid('h2_r3').value, goal:byid('h2_g3').value, act:byid('h2_a3').value},
+      ]
+    }),
+    criteria:`聚焦“使命宣言与价值观、角色维度是否覆盖、目标是否与角色一致、SMART、与‘要事第一’联动”。`,
+  },
+  h3: {
+    name:'习惯三｜要事第一',
+    collect: ()=> ({ long:byid('h3_long').value, milestones:byid('h3_milestone').value, top:byid('h3_top').value, risk:byid('h3_risk').value }),
+    criteria:`聚焦“重要/紧急矩阵（II象限优先）、时间块、第一要事与终点对齐、障碍的备选路径与触发条件”。`,
+  },
+  h4: {
+    name:'习惯四｜双赢思维',
+    collect: ()=> ({
+      scene:byid('h4_scene').value, expect:byid('h4_expect').value, actions:byid('h4_actions').value,
+      check: {
+        integrity: byid('h4_c1').checked, empathy: byid('h4_c2').checked, abundance:byid('h4_c3').checked,
+        respect:byid('h4_c4').checked, listen:byid('h4_c5').checked, feedback:byid('h4_c6').checked
+      }
+    }),
+    criteria:`聚焦“富足心态、情感账户、双赢或无交易、立场背后的利益、协议清晰度”。`,
+  },
+  h5: {
+    name:'习惯五｜知彼解己',
+    collect: ()=> ({
+      pos:{item:byid('h5_pos_item').value, behavior:byid('h5_pos_behavior').value, impact:byid('h5_pos_impact').value, thanks:byid('h5_pos_thanks').value, react:byid('h5_pos_react').value, self:byid('h5_pos_self').value},
+      con:{item:byid('h5_con_item').value, behavior:byid('h5_con_behavior').value, conseq:byid('h5_con_conseq').value, expect:byid('h5_con_expect').value, react:byid('h5_con_react').value, self:byid('h5_con_self').value},
+      listen:{bg:byid('h5_listen_bg').value, pts:byid('h5_listen_pts').value, accept:byid('h5_listen_accept').value, resp:byid('h5_listen_resp').value, verify:byid('h5_listen_verify').value, rx:byid('h5_listen_rx').value},
+      ask:{bg:byid('h5_q_bg').value, pts:byid('h5_q_pts').value, future:byid('h5_q_future').value, open:byid('h5_q_open').value, positive:byid('h5_q_positive').value, rx:byid('h5_q_rx').value}
+    }),
+    criteria:`聚焦“诊断先于处方、SBI 反馈模型、移情式倾听（接纳/回应/求证）、问题质量（未来导向/开放/积极）”。`,
+  },
+  h6: {
+    name:'习惯六｜统合综效',
+    collect: ()=> ({ diff:byid('h6_diff').value, my:byid('h6_my').value, their:byid('h6_their').value, goal:byid('h6_goal').value, alt:byid('h6_alt').value, next:byid('h6_next').value }),
+    criteria:`聚焦“差异即资源、第三选择（组合/变通/创造）、从立场转向利益、共同目标与下一步合作”。`,
+  },
+  h7: {
+    name:'习惯七｜不断更新',
+    collect: ()=> ({
+      backlog:{body:byid('h7_body_backlog').value, heart:byid('h7_heart_backlog').value, mind:byid('h7_mind_backlog').value, spirit:byid('h7_spirit_backlog').value},
+      week:[
+        {body:byid('h7_w1_body').value,heart:byid('h7_w1_heart').value,mind:byid('h7_w1_mind').value,spirit:byid('h7_w1_spirit').value},
+        {body:byid('h7_w2_body').value,heart:byid('h7_w2_heart').value,mind:byid('h7_w2_mind').value,spirit:byid('h7_w2_spirit').value},
+        {body:byid('h7_w3_body').value,heart:byid('h7_w3_heart').value,mind:byid('h7_w3_mind').value,spirit:byid('h7_w3_spirit').value},
+        {body:byid('h7_w4_body').value,heart:byid('h7_w4_heart').value,mind:byid('h7_w4_mind').value,spirit:byid('h7_w4_spirit').value}
+      ],
+      commit:byid('h7_commit').value
+    }),
+    criteria:`聚焦“四维磨刀（身/心/智/灵）均衡、节奏与检视、可衡量指标、与一至六习惯的循环增益”。`,
+  }
+};
+
+// 统一 schema（严格 JSON），评分 0–5，total 0–100
+const SCHEMA = `{
+  "overview": "总评 1-2 句",
+  "strengths": ["优点1","优点2"],
+  "risks": ["风险或盲点1","风险或盲点2"],
+  "advice": [
+    {"action":"下一步具体动作","when":"时间或触发条件","metric":"如何检查/衡量","anchor":"对应习惯要点"}
+  ],
+  "scores": {"alignment":0,"clarity":0,"feasibility":0,"consistency":0},
+  "total": 0
+}`;
+
+function scoreToPct(sc){ // 0–5 四项合并为 100
+  const s = (sc?.alignment||0)+(sc?.clarity||0)+(sc?.feasibility||0)+(sc?.consistency||0);
+  return Math.round((s/20)*100);
+}
+function renderCoach(habitId, res){
+  const box = byid(habitId+'_coach'); if(!box) return;
+  const pct = ('total' in res)? res.total : scoreToPct(res.scores||{});
+  const dims = res.scores||{};
+  box.innerHTML = `
+    <div><b>总评：</b>${(res.overview||'').trim()}</div>
+    <div class="scorebar" title="总分 ${pct}/100"><div class="fill" style="width:${Math.max(0,Math.min(100,pct))}%"></div></div>
+    <div class="grid2">
+      <div class="klist"><b>亮点</b>\n- ${(res.strengths||[]).join('\n- ')||'（无）'}</div>
+      <div class="klist"><b>风险/盲点</b>\n- ${(res.risks||[]).join('\n- ')||'（无）'}</div>
+    </div>
+    <div class="klist"><b>下一步行动（72小时内可执行）</b>\n${(res.advice||[]).map(a=>`- ${a.action}｜${a.when}｜${a.metric}｜锚点：${a.anchor||''}`).join('\n')||'（无）'}</div>
+    <div class="muted" style="font-size:12px">维度：对齐度 ${dims.alignment??'-'}/5 · 清晰度 ${dims.clarity??'-'}/5 · 可行性 ${dims.feasibility??'-'}/5 · 一致性 ${dims.consistency??'-'}/5 ｜ 总分 ${pct}/100</div>`;
+}
+
+async function evaluateHabit(hid){
+  const meta = HABIT_META[hid]; if(!meta){ alert('未知习惯ID'); return; }
+  const input = meta.collect();
+  const system = `你是“高效能人士七个习惯”课程的作业评估教练，沿用科维的原则与语言风格，输出简洁、可执行、可检视的点评；严格只返回 JSON。`;
+  const user = `
+【习惯】${meta.name}
+【评价基准】
+- ${meta.criteria}
+- 评分维度：对齐度/清晰度/可行性/一致性（0–5），总分换算为 100。
+- 建议必须是 72 小时内可执行的最小行动，包含触发条件与检查点。
+
+【学员作业（结构化提取）】
+${JSON.stringify(input, null, 2)}
+
+【输出 JSON 模板】
+${SCHEMA}
+`.trim();
+  const outBox = byid(hid+'_coach'); outBox.textContent = '⏳ 教练评估中…';
+  try{
+    const obj = await askJSON({system,user,schema:SCHEMA,temp:0.35,max_tokens:1400});
+    renderCoach(hid, obj||{});
+    // 保存评估文本到本地（便于导出）
+    // 将展示版文本放入 innerText（导出 Word 时读取）
+    const readable = [
+      `【总评】${obj.overview||''}`,
+      `【亮点】\n- ${(obj.strengths||[]).join('\n- ')}`,
+      `【风险/盲点】\n- ${(obj.risks||[]).join('\n- ')}`,
+      `【下一步】\n- ${(obj.advice||[]).map(a=>`${a.action}｜${a.when}｜${a.metric}`).join('\n- ')}`,
+      `【评分】对齐度 ${obj.scores?.alignment??'-'}/5 · 清晰度 ${obj.scores?.clarity??'-'}/5 · 可行性 ${obj.scores?.feasibility??'-'}/5 · 一致性 ${obj.scores?.consistency??'-'}/5 ｜ 总分 ${('total' in obj)? obj.total : scoreToPct(obj.scores)} / 100`
+    ].join('\n');
+    outBox.dataset.readable = readable; // 保留可读版本
+  }catch(e){
+    outBox.textContent = '⚠️ 评估失败：'+e.message;
+  }
+}
+</script>
+</body>
+</html>
